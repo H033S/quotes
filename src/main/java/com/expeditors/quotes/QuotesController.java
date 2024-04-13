@@ -2,10 +2,9 @@ package com.expeditors.quotes;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("api/quotes")
@@ -13,7 +12,6 @@ public class QuotesController {
 
     private QuotesService quotes;
 
-    @Autowired
     public QuotesController(QuotesService quotes) {
         this.quotes = quotes;
     }
@@ -23,10 +21,36 @@ public class QuotesController {
         return quotes.getAllQuotes() ;
     }
 
-    @GetMapping("/{indexId}")
+    /**
+     * This is an Approach that can be used to return
+     * the quote stored for ID = indexId
+     * In case QuoteIndexOutOfBoundsException is thrown it will
+     * be caught using the ResponseStatusException
+     */
+    @GetMapping("/v1/{indexId}")
+    public String getQuoteByIndex1(@PathVariable int indexId) {
+
+        try {
+            return quotes.getQuoteByIndex(indexId);
+
+        } catch (QuoteIndexOutOfBoundsException qex) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "ResponseStatusException");
+        }
+    }
+
+    /**
+     * This is another Approach that can be used to return
+     * the quote stored for ID = indexId
+     * In case QuoteIndexOutOfBoundsException is thrown it will
+     * be caught using the Handler
+     */
+    @GetMapping("/v2/{indexId}")
     public String getQuoteByIndex(@PathVariable int indexId) {
-        String quote = quotes.getQuoteByIndex(indexId);
-        return quote;
+
+        return  quotes.getQuoteByIndex(indexId);
     }
 
     @PostMapping
@@ -37,9 +61,8 @@ public class QuotesController {
 
     @PatchMapping("/{indexId}")
     public String updateQuote(@PathVariable int indexId,
-                              @RequestBody String newQuote){
+                              @RequestBody String newQuote) {
 
-        String quote = quotes.getQuoteByIndex(indexId);
         return quotes.updateQuoteAt(indexId, newQuote);
     }
 
@@ -47,4 +70,5 @@ public class QuotesController {
     public String deleteQuote(@PathVariable int indexId){
         return quotes.deleteQuote(indexId);
     }
+
 }
